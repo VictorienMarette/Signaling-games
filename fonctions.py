@@ -1,4 +1,4 @@
-from game import *
+from wargame import *
 
 def Y(s,p):
     res_war = 0
