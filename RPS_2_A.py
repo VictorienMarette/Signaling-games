@@ -13,6 +13,12 @@ def U(a, s, t):
     if s == "Paper s" and t == "Rock":
         res -= 2
 
+    if s == "Rock s" and t == "Paper":
+        res -= 1
+
+    if s == "Paper s" and t == "Scissors":
+        res -= 1
+
     return res
 
 
@@ -32,3 +38,4 @@ def U_r(a, s, t):
             res += 3
 
     return res
+
