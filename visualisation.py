@@ -71,7 +71,7 @@ def plotwithtrans(x,y,z, color):
     ])
     x1, y1, z1 = points[:, 0], points[:, 1], points[:, 2]
     vertices = [list(zip(x1, y1, z1))]
-    poly = Poly3DCollection(vertices, alpha=0.5, facecolor='b', edgecolor=color)
+    poly = Poly3DCollection(vertices, alpha=0.5, facecolor=color, edgecolor=color)
     ax.add_collection3d(poly)
 
 #E pour le signal Rock s translation de (0,-1,-2)
