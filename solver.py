@@ -27,25 +27,27 @@ def solve_PBE(T,S,A,U,U_r):
         subsets = list(powerset(range(len_A)))
         subsets.remove(())
         for subset in subsets:
+            print(subset)
+
             c = [i for i in range(len_T)]
 
             one_column_matrix = np.zeros((len_A, len_A))
             one_column_matrix[:, subset[0]] = 1
             A_ub = (np.identity(len_A) - one_column_matrix) @ reciver_utility_per_action_per_signal[s]
-
+            print(A_ub)
+            
             b_ub = one_column_matrix = np.zeros(len_A)
 
             action_selec_matrix = np.zeros((len_A,len_A))
             for i in subset:
                 action_selec_matrix[i][i] = 1
-            utility_eq = ((np.identity(len_A) - one_column_matrix) @ action_selec_matrix) @ reciver_utility_per_action_per_signal[s]
+            utility_eq = action_selec_matrix @ A_ub
             A_eq = np.vstack((utility_eq,np.ones((1,len_T))))
 
             b_eq= np.zeros(len_A)
             b_eq= np.append(b_eq, 1)    
 
             result = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=(0, None))
-            #print(subset)
             #print(result.x)
             fisable_action_distribution_per_signal[s][subset] = result.success
         
