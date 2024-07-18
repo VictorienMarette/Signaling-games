@@ -4,7 +4,7 @@ import sympy as sp
 from others import *
 from beliefs import *
 
-from games.RPS_2_A import *
+import games.RPS_2_A as yo
 
 
 def solve_PBE_frac(T,S,A,U,U_r):
@@ -15,9 +15,9 @@ def solve_PBE_frac(T,S,A,U,U_r):
     # Calcule des actions indifférentes du receveur avec un prior arbitraire
     indifferent_actions = get_indifferent_actions(T,S,A, reciver_utility_per_action_per_signal_per_state)
 
-    return indifferent_actions
+    return sender_utility_per_action_per_signal_per_state
     
 
 
 
-print(solve_PBE_frac(T,S,A,U,U_r))
+#print(solve_PBE_frac(T,S,A,U,U_r))
