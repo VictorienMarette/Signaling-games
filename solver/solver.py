@@ -4,10 +4,6 @@ import sympy as sp
 from others import *
 from beliefs import *
 
-import sys
-sys.path.insert(1, '/home/victorien/Documents/recherche/HEC/Signaling-games/games')
-from RPS_2_A import *
-
 
 def solve_PBE_frac(T,S,A,U,U_r):
     #Calcule les utilités des deux joueurs en fonction de S, A et T 
@@ -19,7 +15,3 @@ def solve_PBE_frac(T,S,A,U,U_r):
 
     return indifferent_actions
     
-
-
-
-print(solve_PBE_frac(T,S,A,U,U_r))
