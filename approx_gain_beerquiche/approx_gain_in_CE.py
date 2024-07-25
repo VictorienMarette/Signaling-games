@@ -1,59 +1,132 @@
 import numpy as np
+from scipy.optimize import minimize
+import random
 
 import sys
 sys.path.insert(1, '/home/victorien/Documents/recherche/HEC/Signaling-games/games')
 from beerquiche import *
 
 
+#Donne un point au hasard
+def random_initial_point():
+    point = np.zeros(10)
+    for s in range(10):
+        point[s] = random.random()
+        
+    return point
+
+
 #Calcule du gain maximum de l'émetteur à p_w fixe
-def max_gain(p_w, print_mediator=False):
+def max_gain(p_w, get_mediator=False, number_initial_points = 4):
+    max = 0
+    max_point = np.zeros(20)
 
-    def selection_sigma_1(s,t):
-        vec = np.zeros(20)
-        vec[2*t+s] = 1
-        return vec
+    for i in range(number_initial_points):
+        value, point = max_gain_at_point(p_w, random_initial_point())
+        if value > max:
+            max = value
+            max_point = point
 
-    def selection_sigma_2(a,t,sa,sb):
-        vec = np.zeros(20)
-        vec[3 + 8*sb+4*sa+2*t+a] = 1
-        return vec
+    if get_mediator:
+        return max, max_point
+    return max
 
-    def selection_sigma_1_x_2(s1,t1,a2,t2,sa2,sb2):
-        mat = np.zeros((20,20))
-        mat[3 + 8*sb2+4*sa2+2*t2+a2][2*t1+s1] = 1
-        return mat
-    
+
+#Calcule du gain maximum de l'émetteur à p_w(cas non triviaux) à point de depart fixe
+def max_gain_at_point(p_w, initial_point):
     def p_T(t):
         if t == 0:
             return p_w
-        return 1- p_w
+        return 1 - p_w
+    
+    def selec_sigma_1(vars, s,t):
+        if s == 0:
+            return vars[t]
+        if t == 0:
+            return 1- vars[0]
+        v =  -p_T(0)*(vars[0] + vars[1])/p_T(1) + vars[0]
+        return v
 
-    # Define the problem data
-    matrix_tp_maximise = np.zeros((20,20))
-    for t in [0,1]:
+    def selec_sigma_2(vars, a,t,s,s1):
+        if a == 0:
+            return vars[2 + 4*t+2*s+s1]
+        return 1- vars[2 + 4*t+2*s+s1]
+
+    # Define the objective function to minimize (negative of x^2 + y^2)
+    def objective(vars):
+        sum = 0
+        for t in [0,1]:
+            for s in [0,1]:
+                for a in [0,1]:
+                    sum += selec_sigma_1(vars, s,t)*selec_sigma_2(vars, a,t,s,s)*p_T(t)*U(A[a],S[s],T[t])
+        return -sum
+    
+    # Define the bounds for x and y
+    bounds = [(0, 1) for i in range(10)] 
+
+    # Define the constraints dictionary
+    constraints = [] 
+
+    #Contraintes des probas
+    constraints.append({'type': 'ineq', \
+                                        'fun': lambda vars: selec_sigma_1(vars, 1,1)})
+    
+
+    #Contraintes du receuveur
+    def constraint_receveur(vars, t,t1,f_S_0,f_S_1):
+        def f(s):
+            if s == 0:
+                return f_S_0
+            return f_S_1
+        
+        sum = 0
+
         for s in [0,1]:
             for a in [0,1]:
-                matrix_tp_maximise += selection_sigma_1_x_2(t,s,a,t,s,s)*p_T(t)*U(A[a],S[s],T[t])
+                sum += selec_sigma_1(vars, s,t)*selec_sigma_2(vars, a,t,s,s)*U(A[a],S[s],T[t])
+                sum -= selec_sigma_1(vars, s,t1)*selec_sigma_2(vars, a,t1,s,f(s))*U(A[a],S[f(s)],T[t])
+        
+        return sum
     
-    # Define the optimization variable
-    x = cp.Variable(20)
+    for t in [0,1]:
+        for t1 in [0,1]:
+            for s in [0,1]:
+                for s1 in [0,1]:
+                    constraints.append({'type': 'ineq', \
+                                        'fun': lambda vars: constraint_receveur(vars, t,t1,s,s1)})
+                    
 
-    # Define the objective function
-    objective = cp.Maximize(cp.quad_form(x, matrix_tp_maximise))
+    #Contraintes de  l'envoyeur
+    def constraint_envoyeur(vars, s,s1,f_A_0,f_A_1):
+        def f(a):
+            if a == 0:
+                return f_A_0
+            return f_A_1
+        
+        sum = 0
 
-    # Define the constraints
-    constraints = [x >= 0,  # Domain constraint: x_i >= 0
-                   x <= 1   # Domain constraint: x_i <= 1
-                  ]
+        for t in [0,1]:
+            for a in [0,1]:
+                sum += selec_sigma_1(vars, s,t)*selec_sigma_2(vars, a,t,s,s)*p_T(t)*U(A[a],S[s],T[t])
+                sum -= selec_sigma_1(vars, s,t)*selec_sigma_2(vars, a,t,s,s1)*p_T(t)*U(A[f(a)],S[s],T[t])
+        
+        return sum
+    
+    for s in [0,1]:
+        for s1 in [0,1]:
+            for a in [0,1]:
+                for a1 in [0,1]:
+                    constraints.append({'type': 'ineq', \
+                                        'fun': lambda vars: constraint_envoyeur(vars, s,s1,a,a1)})
 
-    # Define and solve the problem
-    prob = cp.Problem(objective, constraints)
-    result = prob.solve(solver=cp.SCS)  # Use SCS solver which is open-source
+         
+    # Perform the optimization
+    result = minimize(objective, initial_point, bounds=bounds, constraints=constraints)
 
     # Output the results
-    print("Status:", prob.status)
-    print("Optimal value:", prob.value)
-    print("Optimal x:", x.value)
+    #optimal_x, optimal_y = result.x
+    max_value = -result.fun
 
+    return -result.fun, result.x
 
-max_gain(0.5)
+    
