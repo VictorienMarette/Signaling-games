@@ -42,17 +42,14 @@ def max_gain_at_point(p_w, initial_point):
     def selec_sigma_1(vars, s,t):
         if s == 0:
             return vars[t]
-        if t == 0:
-            return 1- vars[0]
-        v =  -p_T(0)*(vars[0] + vars[1])/p_T(1) + vars[0]
-        return v
+        return 1- vars[t]
 
     def selec_sigma_2(vars, a,t,s,s1):
         if a == 0:
             return vars[2 + 4*t+2*s+s1]
         return 1- vars[2 + 4*t+2*s+s1]
 
-    # Define the objective function to minimize (negative of x^2 + y^2)
+    # Define the objective function to minimize 
     def objective(vars):
         sum = 0
         for t in [0,1]:
@@ -67,10 +64,16 @@ def max_gain_at_point(p_w, initial_point):
     # Define the constraints dictionary
     constraints = [] 
 
-    #Contraintes des probas
-    constraints.append({'type': 'ineq', \
-                                        'fun': lambda vars: selec_sigma_1(vars, 1,1)})
+    """#Contraintes des probas
+    constraints.append({'type': 'eq',\
+                        'fun': lambda vars: 1-p_T(0)*(selec_sigma_1(vars, 0,0)+ selec_sigma_1(vars, 1,0))+\
+                            1-p_T(1)*(selec_sigma_1(vars, 0,1)+ selec_sigma_1(vars, 1,1))})
     
+    def proba_A0_U_A1(vars):
+
+    
+    constraints.append({'type': 'eq',\
+                        'fun': lambda vars: 1-proba_A0_U_A1(vars)})"""
 
     #Contraintes du receuveur
     def constraint_receveur(vars, t,t1,f_S_0,f_S_1):
@@ -121,12 +124,10 @@ def max_gain_at_point(p_w, initial_point):
 
          
     # Perform the optimization
-    result = minimize(objective, initial_point, bounds=bounds, constraints=constraints)
+    result = minimize(objective, initial_point, bounds=bounds, constraints=constraints, method='trust-constr')
 
     # Output the results
     #optimal_x, optimal_y = result.x
     max_value = -result.fun
 
     return -result.fun, result.x
-
-    

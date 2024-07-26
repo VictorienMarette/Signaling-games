@@ -9,28 +9,36 @@ from approx_gain_in_CE import max_gain
 #Affichage
 fig, ax = plt.subplots()
 
+ax.plot([0,0.5], [3,2.5], color='red')
 ax.plot([0.5,1], [1.5,1], color='red')
 
-ax.plot([0.5,1], [2.5,1], color='blue')
+ax.plot([0,0.5,1], [3,2.5,1], color='blue',linestyle='--')
 
 
-X = np.linspace(0, 1, 200)
+X = np.linspace(0, 1, 15)
 #que les cas non triviaux
-X = np.delete(X, [0,199])
-Y = [max_gain(x) for x in X]
+X = np.delete(X, [0,14])
+Y = []
+i = 0
+for x in X:
+    print(i)
+    Y.append(max_gain(x,number_initial_points = 6))
+    i+=1
+X= np.insert(X, 0, 0)
+Y= np.insert(Y, 0, 3)
 ax.plot(X, Y, color='green')
 
 # Define custom legend patches
 blue_patch = Patch(color='blue', label=r'Signaling with Commitment')
 red_patch = Patch(color='red', label=r'PBE')
-green_patch = Patch(color='green', label=r'Communication equilibrium')
+green_patch = Patch(color='green', label=r'Communication equilibrium estimé avec python')
 
 # Add the custom legend
 plt.legend(handles=[red_patch,blue_patch, green_patch])
 
 
 # Set plot limits
-#ax.set_ylim([0, 3.5])
+ax.set_ylim([0, 3.5])
 
 
 # Set labels
