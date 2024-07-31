@@ -8,7 +8,7 @@ from visualisation import *
 
 import sys
 sys.path.insert(1, '/home/victorien/Documents/recherche/HEC/Signaling-games/games')
-from RPS_2_A import *
+from RPS_3_A_1_S import *
 
 
 def solve_PBE_frac(T,S,A,U,U_r):

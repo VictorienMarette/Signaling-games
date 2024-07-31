@@ -15,9 +15,11 @@ ax.plot([0.5,1], [1.5,1], color='red')
 ax.plot([0,0.5,1], [3,2.5,1], color='blue',linestyle='--')
 
 
-X = np.linspace(0, 1, 15)
+X = np.linspace(0, 0.5, 10)
+X1 = np.linspace( 0.5,1, 100)
+X = np.concatenate((X,X1))
 #que les cas non triviaux
-X = np.delete(X, [0,14])
+X = np.delete(X, [0,109])
 Y = []
 i = 0
 for x in X:

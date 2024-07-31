@@ -26,4 +26,4 @@ def U_r(a, s, t):
     if a == "Cower" and t == "Strong":
         return 1
 
-    return 1
+    return 0
