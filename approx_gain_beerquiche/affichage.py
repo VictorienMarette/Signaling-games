@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import numpy as np
 
-from approx_gain_in_CE import max_gain
+from approx_gain_beerquiche.max_gain_CE import max_gain
 
 fig, ax = plt.subplots()
 

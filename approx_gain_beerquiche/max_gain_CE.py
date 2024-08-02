@@ -1,47 +1,9 @@
 import numpy as np
 from scipy.optimize import minimize
-import random
-
-import sys
-sys.path.insert(1, '/home/victorien/Documents/recherche/HEC/Signaling-games/games')
-from beerquiche import *
-
-
-#Donne un point au hasard
-def random_initial_point():
-    point = np.zeros(10)
-    for s in range(10):
-        point[s] = random.random()
-        
-    return point
-
-
-#Calcule du gain maximum de l'émetteur à p_w fixe, part de plusieur point pour éviter d'avoir
-# un minimum local
-def max_gain(p_w, get_mediator=False, number_initial_points = 4):
-    max = 0
-    max_point = np.zeros(20)
-    res = False
-
-    for i in range(number_initial_points):
-        value, point, result = max_gain_at_point(p_w, random_initial_point())
-        if value > max and result:
-            max = value
-            max_point = point
-            res =True
-
-    if get_mediator:
-        return max, max_point, res
-    return max, res
 
 
 #Calcule du gain maximum de l'émetteur à p_w(cas non triviaux) à point de depart fixe
-def max_gain_at_point(p_w, initial_point):
-    def p_T(t):
-        if t == 0:
-            return p_w
-        return 1 - p_w
-    
+def max_gain_CE_inital_point(game, p, initial_point):
     #Permet d'obtenir sigma1(s|t) avec vars
     def selec_sigma_1(vars, s,t):
         if s == 0:
@@ -60,7 +22,8 @@ def max_gain_at_point(p_w, initial_point):
         for t in [0,1]:
             for s in [0,1]:
                 for a in [0,1]:
-                    sum += selec_sigma_1(vars, s,t)*selec_sigma_2(vars, a,t,s,s)*p_T(t)*U(A[a],S[s],T[t])
+                    sum += selec_sigma_1(vars, s,t)*selec_sigma_2(vars, a,t,s,s)*p[t]*\
+                        game.U(game.A[a],game.S[s],game.T[t])
         return -sum
     
     # Define the bounds for x and y

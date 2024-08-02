@@ -1,4 +1,4 @@
-from approx_gain_in_CE import max_gain
+from approx_gain_beerquiche.max_gain_CE import max_gain
 import sys
 sys.path.insert(1, '/home/victorien/Documents/recherche/HEC/Signaling-games/games')
 from beerquiche import *
