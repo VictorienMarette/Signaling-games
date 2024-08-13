@@ -2,46 +2,63 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import numpy as np
 
-from approx_gain_beerquiche.max_gain_CE import max_gain
+from max_gain import max_gain_CE
 
-fig, ax = plt.subplots()
 
-ax.plot([0,0.5], [3,2.5], color='red')
-ax.plot([0.5,1], [1.5,1], color='red')
+def affichage(game, number_of_points, nb_simulation_par_point=6):
+    if len(game.T) > 3:
+        raise ValueError("Erreur, il y a trop d'états.")
+    
+    if len(game.T) == 3:
+        affichage_3D(game, number_of_points, nb_simulation_par_point)
 
-ax.plot([0,0.5,1], [3,2.5,1], color='blue',linestyle='--')
+    if len(game.T) == 2:
+        affichage_2D(game, number_of_points, nb_simulation_par_point)
 
-X = np.linspace(0, 0.5, 10)
-X1 = np.linspace( 0.5,1, 100)
-X = np.concatenate((X,X1))
-X = np.delete(X, [0,109])
 
-Y = []
-i = 0
-for x in X:
-    # On calcule max_gain(x)
-    y, res = max_gain(x,number_initial_points = 6)
-    Y.append(y)
-    if res == False:
-        print("Erreur en: " + str(i))
-    i+=1
-X= np.insert(X, 0, 0)
-Y= np.insert(Y, 0, 3)
-ax.plot(X, Y, color='green')
+def affichage_2D(game, number_of_points,nb_simulation_par_point):
 
-# Define custom legend patches
-blue_patch = Patch(color='blue', label=r'Signaling with Commitment')
-red_patch = Patch(color='red', label=r'PBE')
-green_patch = Patch(color='green', label=r'Communication equilibrium estimé avec python')
+    fig, ax = plt.subplots()
 
-# Add the custom legend
-plt.legend(handles=[red_patch,blue_patch, green_patch])
+    """ax.plot([0,0.5], [3,2.5], color='red')
+    ax.plot([0.5,1], [1.5,1], color='red')
 
-# Set plot limits
-ax.set_ylim([0, 3.5])
+    ax.plot([0,0.5,1], [3,2.5,1], color='blue',linestyle='--')"""
 
-# Set labels
-ax.set_xlabel('P(W)')
-ax.set_ylabel('Mean gain')
+    X = np.linspace(0, 1, number_of_points)
 
-plt.show()
+    Y = []
+    i = 0
+    for x in X:
+        # On calcule max_gain(x)
+        y, res = max_gain_CE(game, [x, 1-x],number_initial_points = nb_simulation_par_point)
+        Y.append(y)
+
+        if i % 10 == 0:
+            print(i)
+        if res == False:
+            print("Erreur en: " + str(i))
+        i+=1
+
+    ax.plot(X, Y, color='green')
+
+    # Define custom legend patches
+    #blue_patch = Patch(color='blue', label=r'Signaling with Commitment')
+    #red_patch = Patch(color='red', label=r'PBE')
+    green_patch = Patch(color='green', label=r'Communication equilibrium estimé avec python')
+
+    # Add the custom legend
+    plt.legend(handles=[ green_patch]) #red_patch,blue_patch,
+
+    # Set plot limits
+    ax.set_ylim([0, None])
+
+    # Set labels
+    ax.set_xlabel('P('+str(game.T[0])+')')
+    ax.set_ylabel('Mean gain')
+
+    plt.show()
+
+
+def affichage_3D(game, number_of_points):
+    pass
