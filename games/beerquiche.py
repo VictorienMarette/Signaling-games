@@ -1,3 +1,5 @@
+name = "Beer Quiche"
+ 
 T = ["Weak", "Strong"]
 
 S = ["Beer", "Quiche"]
