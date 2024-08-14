@@ -1,10 +1,10 @@
 import numpy as np
 import random
 from scipy.optimize import minimize
+import itertools
 
 
 class SignalingGame:
-    
 
     def __init__(self, name, T, S, A, U, U_r):
         self.name = name
@@ -21,7 +21,7 @@ class SignalingGame:
         for s in range(n):
             point[s] = random.random()
         return point
-
+    
 
     def max_gain_wrapper(self, f,n, get_mediator=False, number_initial_points = 4, number_initial_points_if_no_res = 6):
         max = 0
@@ -49,28 +49,44 @@ class SignalingGame:
         return max, res
     
 
+    #Permet d'obtenir sigma1(s|t) avec vars
+    @classmethod
+    def selec_sigma_1(cls,vars, s,t,len_T,len_S,len_A):
+        if s == 0:
+            return vars[(len_S - 1)*t]
+        
+        sum = 0
+        for i in range(s):
+            sum += SignalingGame.selec_sigma_1(vars, i,t,len_T,len_S,len_A)
+        if s == len_S - 1:
+            return (1 - sum)
+        return (1 - sum)*vars[(len_S - 1)*t + s]
+
+
+    #Permet d'obtenir sigma1(a|t,s,s1) avec vars
+    @classmethod
+    def selec_sigma_2(cls,vars, a,t,s,s1,len_T,len_S,len_A):
+            if a == 0:
+                return vars[(len_S - 1)*len_T + 4*t+2*s+s1]
+            
+            sum = 0
+            for i in range(a):
+                sum += SignalingGame.selec_sigma_2(vars, i,t,s,s1, len_T,len_S,len_A)
+            if a == len_A - 1:
+                return (1 - sum)
+            return (1 - sum)*vars[(len_S - 1)*len_T + t*(len_A - 1)*len_S*len_S+s*(len_A - 1)*len_S+s1*(len_A - 1)]
+
+
     def max_gain_CE_inital_point(self, p, initial_point):
         len_T = len(self.T)
         len_S = len(self.S)
         len_A = len(self.A)
 
-        #Permet d'obtenir sigma1(s|t) avec vars
         def selec_sigma_1(vars, s,t):
-            if s == 0:
-                return vars[(len_S - 1)*t]
-            
-            sum = 0
-            for i in range(s):
-                sum += selec_sigma_1(vars, i,t)
-            if s == len_S - 1:
-                return (1 - sum)
-            return (1 - sum)*vars[(len_S - 1)*t + s]
-
-        #Permet d'obtenir sigma1(a|t,s,s1) avec vars
+            return SignalingGame.selec_sigma_1(vars, s,t,len_T,len_S,len_A)
+        
         def selec_sigma_2(vars, a,t,s,s1):
-            if a == 0:
-                return vars[(len_S - 1)*len_T + 4*t+2*s+s1]
-            return 1- vars[(len_S - 1)*len_T + t*(len_A - 1)*len_S*len_S+s*(len_A - 1)*len_S+s1*(len_A - 1)]
+            return SignalingGame.selec_sigma_2(vars, a,t,s,s1,len_T,len_S,len_A)
 
         # Define the objective function to minimize 
         def objective(vars):
@@ -89,52 +105,39 @@ class SignalingGame:
         constraints = [] 
 
         #On definie une contraintes de l'emetteur en fonction de parametres
-        def constraint_envoyeur(vars, t,t1,f_S_0,f_S_1):    
-            def f(s):
-                if s == 0:
-                    return f_S_0
-                return f_S_1
-            
+        def constraint_envoyeur(vars, t,t1,f):    
             sum = 0
-
             for s in range(len_S):
                 for a in range(len_A): 
                     sum += selec_sigma_1(vars, s,t)*selec_sigma_2(vars, a,t,s,s)*self.U(self.A[a],self.S[s],self.T[t])
-                    sum -= selec_sigma_1(vars, s,t1)*selec_sigma_2(vars, a,t1,s,f(s))*self.U(self.A[a],self.S[f(s)],self.T[t])
-            
+                    sum -= selec_sigma_1(vars, s,t1)*selec_sigma_2(vars, a,t1,s,f[s])*self.U(self.A[a],self.S[f[s]],self.T[t])
             return sum
         
         #On ajoute toutes les contraintes de l'envoyeur
+        valeurs = list(range(len_S))
         for t in range(len_T):
-            for t1 in range(len_T):
-                for s in range(len_S):
-                    for s1 in range(len_S):
+            if p[t] > 0:
+                for t1 in range(len_T):
+                    for f in itertools.product(valeurs, repeat=len_S):
                         constraints.append({'type': 'ineq', \
-                                            'fun': lambda vars, t=t,t1=t1,s=s,s1=s1: constraint_envoyeur(vars, t,t1,s,s1)})               
+                                            'fun': lambda vars, t=t,t1=t1,f=f: constraint_envoyeur(vars, t,t1,f)})               
 
         #On definie une contraintes du receveur en fonction de parametres
-        def constraint_receveur(vars, s,s1,f_A_0,f_A_1):
-            def f(a):
-                if a == 0:
-                    return f_A_0
-                return f_A_1
-            
+        def constraint_receveur(vars, s,s1,f):
             sum = 0
-
             for t in range(len_T):
                 for a in range(len_A):
                     sum += selec_sigma_1(vars, s,t)*selec_sigma_2(vars, a,t,s,s)*p[t]*self.U_r(self.A[a],self.S[s],self.T[t])
-                    sum -= selec_sigma_1(vars, s,t)*selec_sigma_2(vars, a,t,s,s1)*p[t]*self.U_r(self.A[f(a)],self.S[s],self.T[t])
-            
+                    sum -= selec_sigma_1(vars, s,t)*selec_sigma_2(vars, a,t,s,s1)*p[t]*self.U_r(self.A[f[a]],self.S[s],self.T[t])
             return sum
         
         #On ajoute toutes les contraintes de l'envoyeur
+        valeurs = list(range(len_A))
         for s in range(len_S):
             for s1 in range(len_S):
-                for a in range(len_A):
-                    for a1 in range(len_A):
-                        constraints.append({'type': 'ineq', \
-                                        'fun': lambda vars,s=s, s1=s1, a=a, a1=a1: constraint_receveur(vars, s,s1,a,a1)})
+                for f in itertools.product(valeurs, repeat=len_A):
+                    constraints.append({'type': 'ineq', \
+                                    'fun': lambda vars,s=s, s1=s1, f=f: constraint_receveur(vars, s,s1,f)})
 
         # Perform the optimization
         result = minimize(objective, initial_point, bounds=bounds, constraints=constraints, method='SLSQP') 
@@ -151,12 +154,12 @@ class SignalingGame:
 
 
     def max_gain_CE_sub_perfect(self, p, get_mediator=False, number_initial_points = 4, number_initial_points_if_no_res = 6):
-        return 1
+        return 1, True
 
 
     def max_gain_PBE(self, p, get_mediator=False, number_initial_points = 4, number_initial_points_if_no_res = 6):
-        return 1
+        return 1, True
 
 
     def max_gain_commit(self, p, get_mediator=False, number_initial_points = 4, number_initial_points_if_no_res = 6):
-        return 1
+        return 1, True

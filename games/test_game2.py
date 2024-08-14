@@ -1,10 +1,10 @@
-name = "test game"
+name = "test game 2"
 
 T = ["Weak", "Strong"]
 
 S = ["Beer", "Quiche", "caca"]
 
-A = ["Fight", "Cower","SupaSayan"]
+A = ["Fight", "Cower"]
 
 def U(a, s, t):
     res = 0
