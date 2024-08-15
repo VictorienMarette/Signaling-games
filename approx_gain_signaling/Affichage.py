@@ -40,14 +40,16 @@ class Affichage:
             i = 0
             for x in X:
                 # On calcule max_gain(x)
-                y, res = self.game.max_gain_PBE([x, 1-x],number_initial_points = nb_simulation_par_point, \
+                y, res = self.game.max_gain_PBE([x, 1-x],number_initial_points = nb_simulation_par_point*5, \
                                             number_initial_points_if_no_res= nb_simulation_si_pas_res)
-                YPBE.append(y)
 
                 if i % 10 == 0:
                     print(i)
                 if res == False:
                     print(str(i)+" Erreur en p("+self.game.T[0]+")="+str(x))
+                    YPBE.append(np.nan)
+                else:
+                    YPBE.append(y)
                 i+=1
 
             ax.plot(X, YPBE, color='red')
@@ -61,14 +63,16 @@ class Affichage:
             i = 0
             for x in X:
                 # On calcule max_gain(x)
-                y, res = self.game.max_gain_commit([x, 1-x],number_initial_points = nb_simulation_par_point, \
+                y, res = self.game.max_gain_commit([x, 1-x],number_initial_points = nb_simulation_par_point*10, \
                                             number_initial_points_if_no_res= nb_simulation_si_pas_res)
-                Ycommit.append(y)
 
                 if i % 10 == 0:
                     print(i)
                 if res == False:
                     print(str(i)+" Erreur en p("+self.game.T[0]+")="+str(x))
+                    Ycommit.append(np.nan)
+                else:
+                    Ycommit.append(y)
                 i+=1
 
             ax.plot(X, Ycommit, color='blue')
@@ -84,12 +88,14 @@ class Affichage:
                 # On calcule max_gain(x)
                 y, res = self.game.max_gain_CE([x, 1-x],number_initial_points = nb_simulation_par_point, \
                                             number_initial_points_if_no_res= nb_simulation_si_pas_res)
-                YCE.append(y)
 
                 if i % 10 == 0:
                     print(i)
                 if res == False:
                     print(str(i)+" Erreur en p("+self.game.T[0]+")="+str(x))
+                    YCE.append(np.nan)
+                else:
+                    YCE.append(y)
                 i+=1
 
             ax.plot(X, YCE, color='green')
@@ -105,12 +111,14 @@ class Affichage:
                 # On calcule max_gain(x)
                 y, res = self.game.max_gain_CE_sub_perfect([x, 1-x],number_initial_points = nb_simulation_par_point, \
                                             number_initial_points_if_no_res= nb_simulation_si_pas_res)
-                YsubCE.append(y)
 
                 if i % 10 == 0:
                     print(i)
                 if res == False:
                     print(str(i)+" Erreur en p("+self.game.T[0]+")="+str(x))
+                    YsubCE.append(np.nan)
+                else:
+                    YsubCE.append(y)
                 i+=1
 
             ax.plot(X, YsubCE, color='yellow')
@@ -141,29 +149,11 @@ class Affichage:
         len_S = len(self.game.S)
         len_A = len(self.game.A)
 
-        #Permet d'obtenir sigma1(s|t) avec vars
-        def selec_sigma_1(vars, s,t):
-            if s == 0:
-                return vars[(len_S - 1)*t]
-            
-            sum = 0
-            for i in range(s):
-                sum += selec_sigma_1(vars, i,t)
-            if s == len_S - 1:
-                return (1 - sum)
-            return (1 - sum)*vars[(len_S - 1)*t + s]
-
-        #Permet d'obtenir sigma1(a|t,s,s1) avec vars
-        def selec_sigma_2(vars, a,t,s,s1):
-            if a == 0:
-                return vars[(len_S - 1)*len_T + 4*t+2*s+s1]
-            return 1- vars[(len_S - 1)*len_T + t*(len_A - 1)*len_S*len_S+s*(len_A - 1)*len_S+s1*(len_A - 1)]
-
         #Permet d'afficher les sigmas qui donnent la solution maximal
         def print_sigmas(vars):
             for t in range(len_T):
                 for s in range(len_S):
-                    print("s1("+self.game.S[s]+"|"+self.game.T[t]+")="+str(selec_sigma_1(vars, s,t)), end=", ")
+                    print("s1("+self.game.S[s]+"|"+self.game.T[t]+")="+str(SignalingGame.selec_sigma_1(vars, s,t, len_T, len_S, len_A)), end=", ")
                 print("")
             print("")
 
@@ -172,7 +162,7 @@ class Affichage:
                     for s1 in range(len_S):
                         for a in range(len_A):
                             print("s2("+self.game.A[a]+"|"+self.game.T[t]+","+self.game.S[s]+","+self.game.S[s1]+")="\
-                                +str(selec_sigma_2(vars, a,t,s,s1)), end=", ")
+                                +str(SignalingGame.selec_sigma_2(vars, a,t,s,s1, len_T, len_S, len_A)), end=", ")
                         print("")
 
 
