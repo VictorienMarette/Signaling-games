@@ -1,13 +1,13 @@
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
+from matplotlib.widgets import CheckButtons
 import numpy as np
 
-from approx_gain_signaling.SignalingGame import *
+from SignalingGame import *
 
 
 class Affichage:
     
-
     def __init__(self, game):
         self.game = game
 
@@ -24,13 +24,14 @@ class Affichage:
             self.affichage_2D(number_of_points, jeux, nb_simulation_par_point, nb_simulation_si_pas_res)
 
 
-    def affichage_2D(self, number_of_points, jeux, nb_simulation_par_point, nb_simulation_si_pas_res):
+    def get_2D_multi_fig(self, number_of_points, jeux, nb_simulation_par_point, nb_simulation_si_pas_res):
 
         fig, ax = plt.subplots()
 
         X = np.linspace(0, 1, number_of_points)
 
         handles=[]
+        Labels = []
 
         if "PBE" in jeux:
             YPBE = []
@@ -52,8 +53,9 @@ class Affichage:
                     YPBE.append(y)
                 i+=1
 
-            ax.plot(X, YPBE, color='red')
+            line1, = ax.plot(X, YPBE, color='red')
             handles.append(Patch(color='red', label=r'PBE'))
+            Labels.append('PBE')
 
         if "Commit" in jeux:
             Ycommit = []
@@ -75,8 +77,9 @@ class Affichage:
                     Ycommit.append(y)
                 i+=1
 
-            ax.plot(X, Ycommit, color='blue')
+            line2, = ax.plot(X, Ycommit, color='blue')
             handles.append(Patch(color='blue', label=r'Signaling with Commitment'))
+            Labels.append('Commit')
 
         if "CE" in jeux:
             YCE = []
@@ -98,8 +101,9 @@ class Affichage:
                     YCE.append(y)
                 i+=1
 
-            ax.plot(X, YCE, color='green')
+            line3, = ax.plot(X, YCE, color='green')
             handles.append(Patch(color='green', label=r'Communication equilibrium'))
+            Labels.append('CE')
 
         if "subCE" in jeux:
             YsubCE = []
@@ -121,21 +125,45 @@ class Affichage:
                     YsubCE.append(y)
                 i+=1
 
-            ax.plot(X, YsubCE, color='yellow')
+            line4, = ax.plot(X, YsubCE, color='yellow')
             handles.append(Patch(color='yellow', label=r'Sub perfect Communication equilibrium'))
-
+            Labels.append('sub perfect CE')
 
         # Add the custom legend
         plt.legend(handles=handles) 
 
         # Set plot limits
-        ax.set_ylim([0, None])
+        plt.ylim(bottom=0)
 
         # Set labels
         ax.set_xlabel('P('+str(self.game.T[0])+')')
         ax.set_ylabel('Mean gain')
 
         ax.set_title(self.game.name)
+
+        def func(label):
+            if label == 'PBE':
+                line1.set_visible(not line1.get_visible())
+            elif label == 'Commit':
+                line2.set_visible(not line2.get_visible())
+            elif label == 'CE':
+                line3.set_visible(not line3.get_visible())
+            elif label == 'sub perfect CE':
+                line4.set_visible(not line4.get_visible())
+            plt.draw()
+
+        return fig, ax, func, Labels
+
+
+    def affichage_2D(self, number_of_points, jeux, nb_simulation_par_point, nb_simulation_si_pas_res):
+        fig, ax, func, Labels = self.get_2D_multi_fig(number_of_points, jeux, nb_simulation_par_point, nb_simulation_si_pas_res)
+
+        plt.subplots_adjust(left=0.1, right=0.75, bottom=0.2, top=0.8)
+        # Création de la zone pour les cases à cocher
+        rax = plt.axes([0.8, 0.5, 0.15, 0.15])
+        checkbox = CheckButtons(rax, Labels, [True for i in Labels])
+
+        checkbox.on_clicked(func)
 
         plt.show()
 
@@ -164,7 +192,6 @@ class Affichage:
                             print("s2("+self.game.A[a]+"|"+self.game.T[t]+","+self.game.S[s]+","+self.game.S[s1]+")="\
                                 +str(SignalingGame.selec_sigma_2(vars, a,t,s,s1, len_T, len_S, len_A)), end=", ")
                         print("")
-
 
         max, max_point, res = self.game.max_gain_CE(p, get_mediator=True)
 
