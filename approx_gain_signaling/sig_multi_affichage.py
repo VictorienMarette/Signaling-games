@@ -1,14 +1,14 @@
+#!/usr/bin/env python3
+
 import argparse
 import importlib
 import os
 
-import sys
-sys.path.insert(1, '/home/victorien/Documents/recherche/HEC/Signaling-games/approx_gain_signaling')
 from SignalingGame import *
 from Affichage import *
 
 
-def compute_game(input):
+def compute_game(input, output):
     try:
         # Create a module spec from the file location
         spec = importlib.util.spec_from_file_location("jeux", input)
@@ -45,8 +45,8 @@ def compute_game(input):
                         raise ValueError(f"La variable U({a},{s},{t}) n'est pas réelle")
     except ValueError as e:
         raise ValueError(e)
-    except Exception:
-        raise ValueError(f"La variable U ne marche pas pour tout les valeurs de T*S*A")
+    except Exception as e:
+        raise ValueError(f"La variable U ne marche pas pour tout les valeurs de T*S*A:{e}")
     
     try:
         for t in module.T:
@@ -56,15 +56,15 @@ def compute_game(input):
                         raise ValueError(f"La variable U_r({a},{s},{t}) n'est pas réelle")
     except ValueError as e:
         raise ValueError(e)
-    except Exception:
-        raise ValueError(f"La variable U_r ne marche pas pour tout les valeurs de T*S*A")
+    except Exception as e:
+        raise ValueError(f"La variable U_r ne marche pas pour tout les valeurs de T*S*A:{e}")
     
     game = SignalingGame(module.name,module.T,module.S,module.A,module.U,module.U_r)
     a = Affichage(game)
 
     print("Debut du calcule de " + module.name)
 
-    a.affichage(args.nb_point, jeux=eq,nb_simulation_par_point=nb_simulation_par_point, nb_simulation_si_pas_res = nb_simulation_si_pas_res)
+    a.save_affichage2D(output, args.nb_point, jeux=eq,nb_simulation_par_point=nb_simulation_par_point, nb_simulation_si_pas_res = nb_simulation_si_pas_res)
 
 
 if __name__ == "__main__":
@@ -109,7 +109,9 @@ if __name__ == "__main__":
     # List all files in the directory
     for root, dirs, files in os.walk(args.input):
         for file in files:
-            try:
-                compute_game(os.path.join(root, file))
-            except Exception as e:
-                print("Erreur dans " + os.path.join(root, file) + f": {e}" )
+            if not "__pycache__" in os.path.join(root, file):
+                print("")
+                try:
+                    compute_game(os.path.join(root, file), args.output)
+                except Exception as e:
+                    print("Erreur dans " + os.path.join(root, file) + f": {e}" )

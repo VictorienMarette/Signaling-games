@@ -172,6 +172,172 @@ class Affichage:
         pass
 
 
+    def affichage(self, number_of_points, jeux = ["PBE","Commit", "CE", "subCE"], nb_simulation_par_point=6, nb_simulation_si_pas_res = 6):
+
+        if len(self.game.T) > 3:
+            raise ValueError("Erreur, il y a trop d'états.")
+        
+        if len(self.game.T) == 3:
+            self.affichage_3D(number_of_points, jeux, nb_simulation_par_point, nb_simulation_si_pas_res)
+
+        if len(self.game.T) == 2:
+            self.affichage_2D(number_of_points, jeux, nb_simulation_par_point, nb_simulation_si_pas_res)
+
+
+    def save_affichage2D(self,save_path, number_of_points, jeux, nb_simulation_par_point, nb_simulation_si_pas_res):
+
+        fig, ax = plt.subplots()
+
+        X = np.linspace(0, 1, number_of_points)
+
+        handles=[]
+
+        if "PBE" in jeux:
+            YPBE = []
+
+            print("Calcule pour le PBE")
+
+            i = 0
+            for x in X:
+                # On calcule max_gain(x)
+                y, res = self.game.max_gain_PBE([x, 1-x],number_initial_points = nb_simulation_par_point*5, \
+                                            number_initial_points_if_no_res= nb_simulation_si_pas_res)
+
+                if i % 10 == 0:
+                    print(i)
+                if res == False:
+                    print(str(i)+" Erreur en p("+self.game.T[0]+")="+str(x))
+                    YPBE.append(np.nan)
+                else:
+                    YPBE.append(y)
+                i+=1
+
+            ax.plot(X, YPBE, color='red')
+            handles.append(Patch(color='red', label=r'PBE'))
+
+            fig2, ax2 = plt.subplots()
+            ax2.plot(X, YPBE, color='red')
+            # Set plot limits
+            ax2.set_ylim(bottom=0)
+            # Set labels
+            ax2.set_xlabel('P('+str(self.game.T[0])+')')
+            ax2.set_ylabel('Mean gain')
+            ax2.set_title(self.game.name + " PBE")
+            fig2.savefig(save_path+"/"+self.game.name+"_PBE.png")
+
+        if "Commit" in jeux:
+            Ycommit = []
+
+            print("Calcule pour le commit")
+
+            i = 0
+            for x in X:
+                # On calcule max_gain(x)
+                y, res = self.game.max_gain_commit([x, 1-x],number_initial_points = nb_simulation_par_point*10, \
+                                            number_initial_points_if_no_res= nb_simulation_si_pas_res)
+
+                if i % 10 == 0:
+                    print(i)
+                if res == False:
+                    print(str(i)+" Erreur en p("+self.game.T[0]+")="+str(x))
+                    Ycommit.append(np.nan)
+                else:
+                    Ycommit.append(y)
+                i+=1
+
+            ax.plot(X, Ycommit, color='blue')
+            handles.append(Patch(color='blue', label=r'Signaling with Commitment'))
+
+            fig2, ax2 = plt.subplots()
+            ax2.plot(X, Ycommit, color='blue')
+            # Set plot limits
+            ax2.set_ylim(bottom=0)
+            # Set labels
+            ax2.set_xlabel('P('+str(self.game.T[0])+')')
+            ax2.set_ylabel('Mean gain')
+            ax2.set_title(self.game.name + " Signaling with commitment")
+            fig2.savefig(save_path+"/"+self.game.name+"_commit.png")
+
+        if "CE" in jeux:
+            YCE = []
+
+            print("Calcule pour le CE")
+
+            i = 0
+            for x in X:
+                # On calcule max_gain(x)
+                y, res = self.game.max_gain_CE([x, 1-x],number_initial_points = nb_simulation_par_point, \
+                                            number_initial_points_if_no_res= nb_simulation_si_pas_res)
+
+                if i % 10 == 0:
+                    print(i)
+                if res == False:
+                    print(str(i)+" Erreur en p("+self.game.T[0]+")="+str(x))
+                    YCE.append(np.nan)
+                else:
+                    YCE.append(y)
+                i+=1
+
+            ax.plot(X, YCE, color='green')
+            handles.append(Patch(color='green', label=r'Communication equilibrium'))
+
+            fig2, ax2 = plt.subplots()
+            ax2.plot(X, YCE, color='green')
+            # Set plot limits
+            ax2.set_ylim(bottom=0)
+            # Set labels
+            ax2.set_xlabel('P('+str(self.game.T[0])+')')
+            ax2.set_ylabel('Mean gain')
+            ax2.set_title(self.game.name + " CE")
+            fig2.savefig(save_path+"/"+self.game.name+"_CE.png")
+
+        if "subCE" in jeux:
+            YsubCE = []
+
+            print("Calcule pour le subCE")
+
+            i = 0
+            for x in X:
+                # On calcule max_gain(x)
+                y, res = self.game.max_gain_CE_sub_perfect([x, 1-x],number_initial_points = nb_simulation_par_point, \
+                                            number_initial_points_if_no_res= nb_simulation_si_pas_res)
+
+                if i % 10 == 0:
+                    print(i)
+                if res == False:
+                    print(str(i)+" Erreur en p("+self.game.T[0]+")="+str(x))
+                    YsubCE.append(np.nan)
+                else:
+                    YsubCE.append(y)
+                i+=1
+
+            ax.plot(X, YsubCE, color='yellow')
+            handles.append(Patch(color='yellow', label=r'Sub perfect Communication equilibrium'))
+
+            fig2, ax2 = plt.subplots()
+            ax2.plot(X, YsubCE, color='yellow')
+            # Set plot limits
+            ax2.set_ylim(bottom=0)
+            # Set labels
+            ax2.set_xlabel('P('+str(self.game.T[0])+')')
+            ax2.set_ylabel('Mean gain')
+            ax2.set_title(self.game.name + " subperfect CE")
+            fig2.savefig(save_path+"/"+self.game.name+"_subCE.png")
+
+        # Add the custom legend
+        ax.legend(handles=handles) 
+
+        # Set plot limits
+        ax.set_ylim(bottom=0)
+
+        # Set labels
+        ax.set_xlabel('P('+str(self.game.T[0])+')')
+        ax.set_ylabel('Mean gain')
+
+        ax.set_title(self.game.name)
+        
+        fig.savefig(save_path+"/"+self.game.name+".png")
+
     def detaille_equilibre_CE(self,p):
         len_T = len(self.game.T)
         len_S = len(self.game.S)

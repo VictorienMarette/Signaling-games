@@ -1,12 +1,12 @@
-T = ["L","H","N"]
+name = "simple poker"
+
+T = ["L","H"]
 
 S = [0,2,4]
 
 A = ["f","c"]
 
 def U(a, s, t):
-    if t == "N":
-        return 0
     if s == 0:
         return -1
     if a == "f":

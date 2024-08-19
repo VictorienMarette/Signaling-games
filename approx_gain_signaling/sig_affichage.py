@@ -1,8 +1,8 @@
+#!/usr/bin/env python3
+
 import argparse
 import importlib
 
-import sys
-sys.path.insert(1, '/home/victorien/Documents/recherche/HEC/Signaling-games/approx_gain_signaling')
 from SignalingGame import *
 from Affichage import *
 
